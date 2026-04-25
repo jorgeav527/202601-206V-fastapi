@@ -1,11 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <title>FastAPI Blog</title>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <p>Hola a todos</p>
+
+<body class="container py-4">
+  <h1>Blog Management</h1>
+  <hr>
+
+  <div class="row">
+    <div class="col-md-4">
+      <h3>Create Post</h3>
+      <form hx-post="/post-ui" hx-target="#create-status" hx-on::after-request="this.reset()">
+        <div class="mb-2">
+          <input type="text" name="title" class="form-control" placeholder="Title" required>
+        </div>
+        <div class="mb-2">
+          <textarea name="content" class="form-control" placeholder="Content" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-success w-100">Save Post</button>
+      </form>
+      <div id="create-status" class="mt-2"></div>
+    </div>
+
+    <div class="col-md-8">
+      <h3>Posts</h3>
+
+      <div class="mb-3">
+        <input type="text" name="q" class="form-control" placeholder="Search by title or content..."
+          hx-get="/posts/search" hx-target="#table-area" hx-trigger="keyup changed delay:300ms[ this.value.length === 3 || this.value.length === 6 ]">
+      </div>
+
+      <button class="btn btn-primary mb-3" hx-get="/post-table" hx-target="#table-area">
+        Load All Posts
+      </button>
+
+      <div id="table-area">
+        <p class="text-muted">No data loaded.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 pt-4 border-top">
+    <h3>System Actions</h3>
+
+    <div class="mb-2">
+      <input type="password" id="pass-input" placeholder="Enter password...">
+    </div>
+
+    <button class="btn btn-outline-secondary" hx-get="/secure-data" hx-target="#header-response"
+      hx-on::config-request="event.detail.headers['X-Password'] = document.getElementById('pass-input').value">
+      Get JSON Data
+    </button>
+
+    <div id="header-response"></div>
+  </div>
+  <footer class="mt-5">
+    <a href="/docs">API Docs</a>
+  </footer>
 </body>
+
 </html>

@@ -1,6 +1,6 @@
 import sqlite3
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Form, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 import os
@@ -73,3 +73,37 @@ def get_all_post():
     return [dict(row) for row in posts]
 
 
+@app.get("/post-table", response_class=HTMLResponse)
+def get_post_table(request: Request):  # Add request for Jinja
+    with get_db_connection() as conn:
+        posts = conn.execute("SELECT * FROM posts").fetchall()
+    return templates.TemplateResponse(
+        request, "partials/table.html", context={"posts": posts}
+    )
+
+
+@app.post("/post-ui")
+def create_from_ui(title: str = Form(...), content: str = Form(...)):
+    with get_db_connection() as conn:
+        conn.execute(
+            "INSERT INTO posts (title, content) VALUES (?, ?)", (title, content)
+        )
+        conn.commit()
+    return HTMLResponse(
+        content=f"<b>Success!</b> Created post: {title}: {content}. Click 'Load All Posts' to see it."
+    )
+
+@app.get("/posts/search", response_class=HTMLResponse)
+def search_posts(request: Request, q: str = Query(...)):
+    search_term = f"%{q}%" # q=primer
+
+    with get_db_connection() as conn:
+        posts = conn.execute(
+            "SELECT * FROM posts WHERE title LIKE ? OR content LIKE ?",
+            (search_term, search_term),
+        ).fetchall()
+
+    # Reuse your existing Jinja partial to render the results!
+    return templates.TemplateResponse(
+        request, "partials/table.html", context={"posts": posts}
+    )
